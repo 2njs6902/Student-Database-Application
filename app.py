@@ -4,6 +4,7 @@ from datetime import date
 import psycopg
 
 def menu():
+    """Prompt for menu choices and run the selected database operation."""
     while True:
         print("\n1. List students")
         print("2. Add student")
@@ -22,6 +23,7 @@ def menu():
                 email = input("Email: ").strip()
                 date_text = input("Enrollment date (YYYY-MM-DD, or blank): ").strip()
 
+                # Convert a blank date to None, which psycopg sends as SQL NULL.
                 enrollment_date = date.fromisoformat(date_text) if date_text else None
                 addStudent(first_name, last_name, email, enrollment_date)
                 print("Student added.")
@@ -41,6 +43,7 @@ def menu():
             else:
                 print("Enter a number from 1 to 5.")
 
+        # Database errors so the user can try again.
         except ValueError:
             print("Enter a whole number for the student ID or a valid YYYY-MM-DD date.")
         except psycopg.errors.UniqueViolation:
@@ -49,6 +52,7 @@ def menu():
             print(f"Database error: {error}")
 
 def getAllStudents():
+    """Fetch and display all students in student ID order."""
     with psycopg.connect(**db_config) as conn:
         rows = conn.execute(
             "SELECT * FROM students ORDER BY student_id"
@@ -58,6 +62,7 @@ def getAllStudents():
         print(f"{student_id} | {first_name} {last_name} | {email} | {enrollment_date}")
 
 def addStudent(first_name, last_name, email, enrollment_date):
+    """Insert a student and let PostgreSQL generate the student ID."""
     with psycopg.connect(**db_config) as conn:
         conn.execute( 
             "INSERT INTO students (first_name, last_name, email, enrollment_date) VALUES (%s, %s, %s, %s)",
@@ -65,6 +70,7 @@ def addStudent(first_name, last_name, email, enrollment_date):
         )
 
 def updateStudentEmail(student_id, new_email):
+    """Change the email of the student with the given ID."""
     with psycopg.connect(**db_config) as conn:
         conn.execute(
             "UPDATE students SET email = %s WHERE student_id = %s",
@@ -72,6 +78,7 @@ def updateStudentEmail(student_id, new_email):
         )
 
 def deleteStudent(student_id):
+    """Remove the student with the given ID."""
     with psycopg.connect(**db_config) as conn:
         conn.execute(
             "DELETE FROM students WHERE student_id = %s",
@@ -79,7 +86,7 @@ def deleteStudent(student_id):
         )
 
 if __name__ == "__main__":
-    # Prompt password
+    # Prompt for password
     db_config = {
         "host": "localhost",
         "port": 5432,
